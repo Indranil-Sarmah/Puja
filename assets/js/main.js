@@ -52,42 +52,22 @@ function initFallingDecor() {
   });
 }
 
-const galleryImages = [
-  {
-    src: 'assets/images/gallery/day-01-foundation.svg',
-    caption: 'Laying the foundation with sacred clay',
-    day: 'Day 01',
-  },
-  {
-    src: 'assets/images/gallery/day-02-structure.svg',
-    caption: 'Building the basic structure',
-    day: 'Day 02',
-  },
-  {
-    src: 'assets/images/gallery/day-03-detailing.svg',
-    caption: 'Adding fine details and features',
-    day: 'Day 03',
-  },
-  {
-    src: 'assets/images/gallery/day-04-painting.svg',
-    caption: 'Painting and decorating the idol',
-    day: 'Day 04',
-  },
-  {
-    src: 'assets/images/gallery/day-05-finishing.svg',
-    caption: 'Final touches and adornments',
-    day: 'Day 05',
-  },
-  {
-    src: 'assets/images/gallery/day-06-ready.svg',
-    caption: 'The idol is ready for Viswakarma Puja!',
-    day: 'Day 06',
-  },
-];
+const galleryImages = Array.from({ length: 10 }, (_, i) => {
+  const num = String(i + 1).padStart(2, '0');
+  return {
+    src: `assets/images/Slider/${num}.jpg`,
+    caption: `Idol making progress — Step ${num}`,
+    day: `Step ${num}`,
+  };
+});
 
-function createGalleryCard(item) {
+function createGalleryCard(item, index) {
   const card = document.createElement('div');
   card.className = 'gallery-card';
+  card.dataset.index = String(index);
+  card.setAttribute('role', 'button');
+  card.setAttribute('tabindex', '0');
+  card.setAttribute('aria-label', `View ${item.day}: ${item.caption}`);
   card.innerHTML = `
     <div class="gallery-card-media">
       <img src="${item.src}" alt="${item.caption}" loading="lazy">
@@ -100,8 +80,8 @@ function createGalleryCard(item) {
 
 function fillGalleryRow(container, images) {
   const duplicated = [...images, ...images];
-  duplicated.forEach((item) => {
-    container.appendChild(createGalleryCard(item));
+  duplicated.forEach((item, i) => {
+    container.appendChild(createGalleryCard(item, i % images.length));
   });
 }
 
@@ -109,6 +89,93 @@ function renderGallery() {
   const row = document.getElementById('galleryScroll');
   if (!row || galleryImages.length === 0) return;
   fillGalleryRow(row, galleryImages);
+}
+
+function initImageSlider() {
+  const slider = document.getElementById('imageSlider');
+  const sliderImg = document.getElementById('sliderImg');
+  const sliderCaption = document.getElementById('sliderCaption');
+  const prevBtn = document.getElementById('sliderPrev');
+  const nextBtn = document.getElementById('sliderNext');
+  const galleryScroll = document.getElementById('galleryScroll');
+
+  if (!slider || !sliderImg || !sliderCaption || !prevBtn || !nextBtn || !galleryScroll) return;
+
+  let currentIndex = 0;
+
+  const showSlide = (index) => {
+    const total = galleryImages.length;
+    currentIndex = ((index % total) + total) % total;
+    const item = galleryImages[currentIndex];
+    sliderImg.src = item.src;
+    sliderImg.alt = item.caption;
+    sliderCaption.textContent = `${item.day} — ${item.caption}`;
+  };
+
+  const openSlider = (index) => {
+    showSlide(index);
+    slider.classList.add('is-open');
+    slider.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('slider-open');
+    galleryScroll.style.animationPlayState = 'paused';
+    prevBtn.focus();
+  };
+
+  const closeSlider = () => {
+    slider.classList.remove('is-open');
+    slider.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('slider-open');
+    galleryScroll.style.animationPlayState = '';
+  };
+
+  galleryScroll.addEventListener('click', (event) => {
+    const card = event.target.closest('.gallery-card');
+    if (!card) return;
+    openSlider(Number(card.dataset.index));
+  });
+
+  galleryScroll.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const card = event.target.closest('.gallery-card');
+    if (!card) return;
+    event.preventDefault();
+    openSlider(Number(card.dataset.index));
+  });
+
+  prevBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    showSlide(currentIndex - 1);
+  });
+
+  nextBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    showSlide(currentIndex + 1);
+  });
+
+  slider.addEventListener('click', (event) => {
+    if (
+      event.target === slider
+      || event.target.classList.contains('image-slider__backdrop')
+    ) {
+      closeSlider();
+    }
+  });
+
+  slider.querySelector('.image-slider__dialog')?.addEventListener('click', (event) => {
+    event.stopPropagation();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (!slider.classList.contains('is-open')) return;
+
+    if (event.key === 'Escape') {
+      closeSlider();
+    } else if (event.key === 'ArrowLeft') {
+      showSlide(currentIndex - 1);
+    } else if (event.key === 'ArrowRight') {
+      showSlide(currentIndex + 1);
+    }
+  });
 }
 
 function initHeroVideo() {
@@ -190,5 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initHeroVideo();
   initFallingDecor();
   renderGallery();
+  initImageSlider();
   initPushpanjali();
 });

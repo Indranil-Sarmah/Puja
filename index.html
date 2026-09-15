@@ -84,6 +84,18 @@
     </section>
   </main>
 
+  <div class="image-slider" id="imageSlider" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Idol making progress gallery">
+    <div class="image-slider__backdrop"></div>
+    <div class="image-slider__dialog">
+      <button type="button" class="image-slider__nav image-slider__nav--prev" id="sliderPrev" aria-label="Previous image">&lt;</button>
+      <figure class="image-slider__figure">
+        <img class="image-slider__img" id="sliderImg" src="" alt="">
+        <figcaption class="image-slider__caption" id="sliderCaption"></figcaption>
+      </figure>
+      <button type="button" class="image-slider__nav image-slider__nav--next" id="sliderNext" aria-label="Next image">&gt;</button>
+    </div>
+  </div>
+
   <script src="assets/js/main.js"></script>
 </body>
 </html>
