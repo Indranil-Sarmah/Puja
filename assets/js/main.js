@@ -418,77 +418,103 @@ function initMantraAudio() {
   if (!audio || !btn) return;
 
   const icon = btn.querySelector('.mantra-toggle-btn__icon');
-  let isPlaying = true;
   let userPaused = false;
+  let soundEnabled = false;
 
   audio.loop = true;
   audio.volume = 0.45;
-  audio.muted = false;
 
-  const setPlayingUI = (playing) => {
-    isPlaying = playing;
+  const syncPlayingUI = () => {
+    const playing = !audio.paused;
     btn.classList.toggle('is-playing', playing);
     btn.setAttribute('aria-pressed', String(playing));
     btn.setAttribute('aria-label', playing ? 'Pause mantra' : 'Play mantra');
     icon.textContent = playing ? '⏸' : '▶';
   };
 
-  const startMantra = async () => {
+  const playMuted = async () => {
     if (userPaused) return;
+    audio.muted = true;
     try {
       await audio.play();
-      setPlayingUI(true);
     } catch {
-      setPlayingUI(true);
+      /* Retry when media is ready */
     }
+    syncPlayingUI();
+  };
+
+  const enableSound = async () => {
+    if (soundEnabled) return;
+    soundEnabled = true;
+    audio.muted = false;
+
+    if (!userPaused) {
+      try {
+        await audio.play();
+      } catch {
+        await playMuted();
+      }
+    }
+
+    syncPlayingUI();
+  };
+
+  const tryAutoplay = async () => {
+    if (userPaused) return;
+
+    audio.muted = false;
+    try {
+      await audio.play();
+      soundEnabled = true;
+    } catch {
+      await playMuted();
+    }
+
+    syncPlayingUI();
   };
 
   const playMantra = async () => {
     userPaused = false;
+    audio.muted = false;
+    soundEnabled = true;
     try {
       await audio.play();
-      setPlayingUI(true);
     } catch {
-      setPlayingUI(false);
+      syncPlayingUI();
     }
   };
 
   const pauseMantra = () => {
     userPaused = true;
     audio.pause();
-    setPlayingUI(false);
+    syncPlayingUI();
   };
 
   btn.addEventListener('click', () => {
-    if (isPlaying) pauseMantra();
-    else playMantra();
+    if (audio.paused) playMantra();
+    else pauseMantra();
   });
 
-  audio.addEventListener('play', () => {
-    if (!userPaused) setPlayingUI(true);
+  audio.addEventListener('play', syncPlayingUI);
+  audio.addEventListener('pause', syncPlayingUI);
+
+  const unlockEvents = ['pointerdown', 'touchstart', 'keydown', 'scroll', 'wheel'];
+  const unlockSound = () => {
+    enableSound();
+    unlockEvents.forEach((eventName) => {
+      document.removeEventListener(eventName, unlockSound, true);
+    });
+  };
+
+  unlockEvents.forEach((eventName) => {
+    document.addEventListener(eventName, unlockSound, { capture: true, passive: true });
   });
 
-  audio.addEventListener('pause', () => {
-    if (userPaused) setPlayingUI(false);
-  });
-
-  setPlayingUI(true);
-  startMantra();
-
-  audio.addEventListener('canplaythrough', startMantra, { once: true });
-  window.addEventListener('load', startMantra);
-  window.addEventListener('pageshow', startMantra);
+  tryAutoplay();
+  audio.addEventListener('canplaythrough', tryAutoplay, { once: true });
+  window.addEventListener('load', tryAutoplay);
+  window.addEventListener('pageshow', tryAutoplay);
 }
-
-(function bootstrapMantraAudio() {
-  const audio = document.getElementById('mantraAudio');
-  if (!audio) return;
-
-  audio.volume = 0.45;
-  audio.loop = true;
-  audio.muted = false;
-  audio.play().catch(() => {});
-})();
 
 document.addEventListener('DOMContentLoaded', () => {
   initMantraAudio();
