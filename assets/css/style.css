@@ -375,6 +375,14 @@ main {
   border-bottom: 1px solid rgba(255, 215, 0, 0.2);
   padding: 0.75rem 0;
   backdrop-filter: blur(4px);
+  overflow: hidden;
+  touch-action: pan-y pinch-zoom;
+  cursor: grab;
+}
+
+.gallery-panel.is-dragging {
+  cursor: grabbing;
+  user-select: none;
 }
 
 .gallery-section .pushpanjali-area {
@@ -394,24 +402,7 @@ main {
 .gallery-scroll {
   display: flex;
   width: max-content;
-  animation: scrollGallery 35s linear infinite;
-}
-
-.gallery-scroll--reverse {
-  animation-name: scrollGalleryReverse;
-  animation-duration: 40s;
-}
-
-.gallery-scroll:hover { animation-play-state: paused; }
-
-@keyframes scrollGallery {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-@keyframes scrollGalleryReverse {
-  0% { transform: translateX(-50%); }
-  100% { transform: translateX(0); }
+  will-change: transform;
 }
 
 /* Ritual diya — appears below Pushpanjali button */

@@ -91,7 +91,160 @@ function renderGallery() {
   fillGalleryRow(row, galleryImages);
 }
 
-function initImageSlider() {
+function initGalleryCarousel() {
+  const panel = document.querySelector('.gallery-panel');
+  const track = document.getElementById('galleryScroll');
+  if (!panel || !track) return null;
+
+  const AUTO_DURATION = 35;
+  const CLICK_THRESHOLD = 8;
+  const FRICTION = 0.92;
+  const MIN_VELOCITY = 12;
+
+  let offset = 0;
+  let loopWidth = 0;
+  let autoSpeed = 50;
+  let velocity = 0;
+  let isDragging = false;
+  let isPaused = false;
+  let isHovered = false;
+  let dragStartX = 0;
+  let lastPointerX = 0;
+  let lastMoveTime = 0;
+  let dragMoved = false;
+  let suppressClick = false;
+  let rafId = null;
+  let lastFrameTime = null;
+
+  const measure = () => {
+    loopWidth = track.scrollWidth / 2;
+    autoSpeed = loopWidth > 0 ? loopWidth / AUTO_DURATION : 50;
+  };
+
+  const wrapOffset = () => {
+    if (loopWidth <= 0) return;
+    while (offset <= -loopWidth) offset += loopWidth;
+    while (offset > 0) offset -= loopWidth;
+  };
+
+  const applyTransform = () => {
+    track.style.transform = `translate3d(${offset}px, 0, 0)`;
+  };
+
+  const tick = (time) => {
+    if (lastFrameTime == null) lastFrameTime = time;
+    const dt = Math.min((time - lastFrameTime) / 1000, 0.05);
+    lastFrameTime = time;
+
+    if (!isDragging && !isPaused && !isHovered) {
+      if (Math.abs(velocity) > MIN_VELOCITY) {
+        offset += velocity * dt;
+        velocity *= FRICTION ** (dt * 60);
+        if (Math.abs(velocity) <= MIN_VELOCITY) velocity = 0;
+      } else {
+        offset -= autoSpeed * dt;
+      }
+      wrapOffset();
+      applyTransform();
+    }
+
+    rafId = requestAnimationFrame(tick);
+  };
+
+  const onPointerDown = (event) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+    suppressClick = false;
+    isDragging = true;
+    dragMoved = false;
+    velocity = 0;
+    dragStartX = event.clientX;
+    lastPointerX = event.clientX;
+    lastMoveTime = performance.now();
+    panel.classList.add('is-dragging');
+    track.setPointerCapture(event.pointerId);
+  };
+
+  const onPointerMove = (event) => {
+    if (!isDragging) return;
+
+    const now = performance.now();
+    const dx = event.clientX - lastPointerX;
+    const dt = Math.max(now - lastMoveTime, 1);
+
+    if (Math.abs(event.clientX - dragStartX) > CLICK_THRESHOLD) {
+      dragMoved = true;
+    }
+
+    offset += dx;
+    velocity = (dx / dt) * 1000;
+    wrapOffset();
+    applyTransform();
+
+    lastPointerX = event.clientX;
+    lastMoveTime = now;
+  };
+
+  const endDrag = (event) => {
+    if (!isDragging) return;
+
+    isDragging = false;
+    panel.classList.remove('is-dragging');
+
+    if (track.hasPointerCapture(event.pointerId)) {
+      track.releasePointerCapture(event.pointerId);
+    }
+
+    if (dragMoved) {
+      suppressClick = true;
+      velocity *= 0.85;
+    }
+  };
+
+  panel.addEventListener('pointerdown', onPointerDown);
+  panel.addEventListener('pointermove', onPointerMove);
+  panel.addEventListener('pointerup', endDrag);
+  panel.addEventListener('pointercancel', endDrag);
+  panel.addEventListener('mouseenter', () => { isHovered = true; });
+  panel.addEventListener('mouseleave', () => { isHovered = false; });
+
+  panel.addEventListener('wheel', (event) => {
+    if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
+
+    event.preventDefault();
+    offset -= event.deltaX;
+    velocity = -event.deltaX * 8;
+    wrapOffset();
+    applyTransform();
+  }, { passive: false });
+
+  const remeasure = () => {
+    measure();
+    wrapOffset();
+    applyTransform();
+  };
+
+  window.addEventListener('resize', remeasure);
+  track.querySelectorAll('img').forEach((img) => {
+    if (img.complete) return;
+    img.addEventListener('load', remeasure, { once: true });
+  });
+
+  remeasure();
+  rafId = requestAnimationFrame(tick);
+
+  return {
+    wasDragged: () => suppressClick,
+    clearDrag: () => { suppressClick = false; },
+    pause: () => { isPaused = true; velocity = 0; },
+    resume: () => { isPaused = false; },
+    destroy: () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    },
+  };
+}
+
+function initImageSlider(galleryCarousel) {
   const slider = document.getElementById('imageSlider');
   const sliderImg = document.getElementById('sliderImg');
   const sliderCaption = document.getElementById('sliderCaption');
@@ -117,7 +270,7 @@ function initImageSlider() {
     slider.classList.add('is-open');
     slider.setAttribute('aria-hidden', 'false');
     document.body.classList.add('slider-open');
-    galleryScroll.style.animationPlayState = 'paused';
+    galleryCarousel?.pause();
     prevBtn.focus();
   };
 
@@ -125,10 +278,14 @@ function initImageSlider() {
     slider.classList.remove('is-open');
     slider.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('slider-open');
-    galleryScroll.style.animationPlayState = '';
+    galleryCarousel?.resume();
   };
 
   galleryScroll.addEventListener('click', (event) => {
+    if (galleryCarousel?.wasDragged()) {
+      galleryCarousel.clearDrag();
+      return;
+    }
     const card = event.target.closest('.gallery-card');
     if (!card) return;
     openSlider(Number(card.dataset.index));
@@ -257,6 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initHeroVideo();
   initFallingDecor();
   renderGallery();
-  initImageSlider();
+  const galleryCarousel = initGalleryCarousel();
+  initImageSlider(galleryCarousel);
   initPushpanjali();
 });
