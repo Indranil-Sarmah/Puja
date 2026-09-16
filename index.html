@@ -66,10 +66,15 @@
         <div class="gallery-scroll" id="galleryScroll"></div>
       </div>
       <div class="pushpanjali-area">
-        <button type="button" class="pushpanjali-btn" id="pushpanjaliBtn">
-          <span class="pushpanjali-btn__icon">🌸</span>
-          <span class="pushpanjali-btn__text">Pushpanjali — Offer Flowers</span>
-        </button>
+        <div class="pushpanjali-actions">
+          <button type="button" class="mantra-toggle-btn is-playing" id="mantraToggleBtn" aria-label="Pause mantra" aria-pressed="true">
+            <span class="mantra-toggle-btn__icon" aria-hidden="true">⏸</span>
+          </button>
+          <button type="button" class="pushpanjali-btn" id="pushpanjaliBtn">
+            <span class="pushpanjali-btn__icon">🌸</span>
+            <span class="pushpanjali-btn__text">Pushpanjali — Offer Flowers</span>
+          </button>
+        </div>
         <div class="ritual-diya" id="ritualDiya" aria-hidden="true">
           <div class="ritual-diya__figure">
             <div class="ritual-diya__glow"></div>
@@ -95,6 +100,10 @@
       <button type="button" class="image-slider__nav image-slider__nav--next" id="sliderNext" aria-label="Next image">&gt;</button>
     </div>
   </div>
+
+  <audio id="mantraAudio" autoplay muted loop playsinline preload="auto">
+    <source src="assets/audio/mantra.mp3" type="audio/mpeg">
+  </audio>
 
   <script src="assets/js/main.js"></script>
 </body>

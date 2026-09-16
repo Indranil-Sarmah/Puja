@@ -409,6 +409,76 @@ function initPushpanjali() {
   });
 }
 
+function initMantraAudio() {
+  const audio = document.getElementById('mantraAudio');
+  const btn = document.getElementById('mantraToggleBtn');
+  if (!audio || !btn) return;
+
+  const icon = btn.querySelector('.mantra-toggle-btn__icon');
+  audio.loop = true;
+  audio.volume = 0.45;
+  let isPlaying = true;
+  let soundUnlocked = false;
+
+  const setPlayingUI = (playing) => {
+    isPlaying = playing;
+    btn.classList.toggle('is-playing', playing);
+    btn.setAttribute('aria-pressed', String(playing));
+    btn.setAttribute('aria-label', playing ? 'Pause mantra' : 'Play mantra');
+    icon.textContent = playing ? '⏸' : '▶';
+  };
+
+  const unlockSound = async () => {
+    if (soundUnlocked) return;
+    soundUnlocked = true;
+    audio.muted = false;
+
+    if (isPlaying) {
+      try {
+        await audio.play();
+      } catch {
+        setPlayingUI(false);
+      }
+    }
+
+    document.removeEventListener('pointerdown', unlockSound);
+    document.removeEventListener('touchstart', unlockSound);
+  };
+
+  const playMantra = async () => {
+    audio.muted = false;
+    soundUnlocked = true;
+    try {
+      await audio.play();
+      setPlayingUI(true);
+    } catch {
+      setPlayingUI(false);
+    }
+  };
+
+  const pauseMantra = () => {
+    audio.pause();
+    setPlayingUI(false);
+  };
+
+  btn.addEventListener('click', () => {
+    if (isPlaying) pauseMantra();
+    else playMantra();
+  });
+
+  audio.addEventListener('play', () => setPlayingUI(true));
+  audio.addEventListener('pause', () => setPlayingUI(false));
+
+  setPlayingUI(true);
+  audio.muted = true;
+  audio.play().catch(() => {
+    /* Autoplay blocked — UI stays in play state; sound unlocks on first tap */
+  });
+
+  document.addEventListener('pointerdown', unlockSound, { passive: true });
+  document.addEventListener('touchstart', unlockSound, { passive: true });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initHeroVideo();
   initFallingDecor();
@@ -416,4 +486,5 @@ document.addEventListener('DOMContentLoaded', () => {
   const galleryCarousel = initGalleryCarousel();
   initImageSlider(galleryCarousel);
   initPushpanjali();
+  initMantraAudio();
 });
