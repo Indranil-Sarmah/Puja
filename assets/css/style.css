@@ -670,20 +670,6 @@ main {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.gallery-card-caption {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 2;
-  padding: 0.55rem 0.65rem 0.65rem;
-  color: var(--cream);
-  font-size: 0.68rem;
-  font-weight: 500;
-  line-height: 1.35;
-  text-align: left;
-}
-
 /* ===== Image slider lightbox ===== */
 .image-slider {
   position: fixed;
@@ -710,6 +696,37 @@ main {
   inset: 0;
   background: rgba(10, 2, 2, 0.88);
   backdrop-filter: blur(6px);
+}
+
+.image-slider__close {
+  position: absolute;
+  top: max(0.75rem, env(safe-area-inset-top));
+  right: max(0.75rem, env(safe-area-inset-right));
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 2px solid rgba(255, 215, 0, 0.55);
+  border-radius: 50%;
+  background: rgba(42, 6, 6, 0.9);
+  color: var(--gold);
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.image-slider__close:hover {
+  background: rgba(255, 215, 0, 0.15);
+  border-color: var(--gold);
+  transform: scale(1.05);
+}
+
+.image-slider__close:active {
+  transform: scale(0.96);
 }
 
 .image-slider__dialog {
@@ -741,15 +758,6 @@ main {
   border: 2px solid rgba(255, 215, 0, 0.45);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
   background: var(--maroon-dark);
-}
-
-.image-slider__caption {
-  color: var(--cream);
-  font-size: 0.85rem;
-  font-weight: 500;
-  text-align: center;
-  padding: 0 0.5rem;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
 }
 
 .image-slider__nav {
@@ -822,7 +830,9 @@ body.slider-open {
     font-size: 1.15rem;
   }
 
-  .image-slider__caption {
-    font-size: 0.75rem;
+  .image-slider__close {
+    width: 38px;
+    height: 38px;
+    font-size: 1.5rem;
   }
 }

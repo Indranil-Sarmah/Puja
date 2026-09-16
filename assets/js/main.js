@@ -66,12 +66,11 @@ function createGalleryCard(item, index) {
   card.dataset.index = String(index);
   card.setAttribute('role', 'button');
   card.setAttribute('tabindex', '0');
-  card.setAttribute('aria-label', `View ${item.day}: ${item.caption}`);
+  card.setAttribute('aria-label', `View ${item.day}`);
   card.innerHTML = `
     <div class="gallery-card-media">
-      <img src="${item.src}" alt="${item.caption}" loading="lazy">
+      <img src="${item.src}" alt="${item.day}" loading="lazy">
       <span class="gallery-card-day">${item.day}</span>
-      <p class="gallery-card-caption">${item.caption}</p>
     </div>
   `;
   return card;
@@ -246,12 +245,12 @@ function initGalleryCarousel() {
 function initImageSlider(galleryCarousel) {
   const slider = document.getElementById('imageSlider');
   const sliderImg = document.getElementById('sliderImg');
-  const sliderCaption = document.getElementById('sliderCaption');
   const prevBtn = document.getElementById('sliderPrev');
   const nextBtn = document.getElementById('sliderNext');
+  const closeBtn = document.getElementById('sliderClose');
   const galleryScroll = document.getElementById('galleryScroll');
 
-  if (!slider || !sliderImg || !sliderCaption || !prevBtn || !nextBtn || !galleryScroll) return;
+  if (!slider || !sliderImg || !prevBtn || !nextBtn || !closeBtn || !galleryScroll) return;
 
   let currentIndex = 0;
 
@@ -260,8 +259,7 @@ function initImageSlider(galleryCarousel) {
     currentIndex = ((index % total) + total) % total;
     const item = galleryImages[currentIndex];
     sliderImg.src = item.src;
-    sliderImg.alt = item.caption;
-    sliderCaption.textContent = `${item.day} — ${item.caption}`;
+    sliderImg.alt = item.day;
   };
 
   const openSlider = (index) => {
@@ -306,6 +304,11 @@ function initImageSlider(galleryCarousel) {
   nextBtn.addEventListener('click', (event) => {
     event.stopPropagation();
     showSlide(currentIndex + 1);
+  });
+
+  closeBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    closeSlider();
   });
 
   slider.addEventListener('click', (event) => {
@@ -415,10 +418,12 @@ function initMantraAudio() {
   if (!audio || !btn) return;
 
   const icon = btn.querySelector('.mantra-toggle-btn__icon');
+  let isPlaying = true;
+  let userPaused = false;
+
   audio.loop = true;
   audio.volume = 0.45;
-  let isPlaying = true;
-  let soundUnlocked = false;
+  audio.muted = false;
 
   const setPlayingUI = (playing) => {
     isPlaying = playing;
@@ -428,26 +433,18 @@ function initMantraAudio() {
     icon.textContent = playing ? '⏸' : '▶';
   };
 
-  const unlockSound = async () => {
-    if (soundUnlocked) return;
-    soundUnlocked = true;
-    audio.muted = false;
-
-    if (isPlaying) {
-      try {
-        await audio.play();
-      } catch {
-        setPlayingUI(false);
-      }
+  const startMantra = async () => {
+    if (userPaused) return;
+    try {
+      await audio.play();
+      setPlayingUI(true);
+    } catch {
+      setPlayingUI(true);
     }
-
-    document.removeEventListener('pointerdown', unlockSound);
-    document.removeEventListener('touchstart', unlockSound);
   };
 
   const playMantra = async () => {
-    audio.muted = false;
-    soundUnlocked = true;
+    userPaused = false;
     try {
       await audio.play();
       setPlayingUI(true);
@@ -457,6 +454,7 @@ function initMantraAudio() {
   };
 
   const pauseMantra = () => {
+    userPaused = true;
     audio.pause();
     setPlayingUI(false);
   };
@@ -466,25 +464,38 @@ function initMantraAudio() {
     else playMantra();
   });
 
-  audio.addEventListener('play', () => setPlayingUI(true));
-  audio.addEventListener('pause', () => setPlayingUI(false));
-
-  setPlayingUI(true);
-  audio.muted = true;
-  audio.play().catch(() => {
-    /* Autoplay blocked — UI stays in play state; sound unlocks on first tap */
+  audio.addEventListener('play', () => {
+    if (!userPaused) setPlayingUI(true);
   });
 
-  document.addEventListener('pointerdown', unlockSound, { passive: true });
-  document.addEventListener('touchstart', unlockSound, { passive: true });
+  audio.addEventListener('pause', () => {
+    if (userPaused) setPlayingUI(false);
+  });
+
+  setPlayingUI(true);
+  startMantra();
+
+  audio.addEventListener('canplaythrough', startMantra, { once: true });
+  window.addEventListener('load', startMantra);
+  window.addEventListener('pageshow', startMantra);
 }
 
+(function bootstrapMantraAudio() {
+  const audio = document.getElementById('mantraAudio');
+  if (!audio) return;
+
+  audio.volume = 0.45;
+  audio.loop = true;
+  audio.muted = false;
+  audio.play().catch(() => {});
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
+  initMantraAudio();
   initHeroVideo();
   initFallingDecor();
   renderGallery();
   const galleryCarousel = initGalleryCarousel();
   initImageSlider(galleryCarousel);
   initPushpanjali();
-  initMantraAudio();
 });
