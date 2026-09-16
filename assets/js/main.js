@@ -56,7 +56,6 @@ const galleryImages = Array.from({ length: 10 }, (_, i) => {
   const num = String(i + 1).padStart(2, '0');
   return {
     src: `assets/images/Slider/${num}.jpg`,
-    caption: `Idol making progress — Step ${num}`,
     day: `Step ${num}`,
   };
 });
