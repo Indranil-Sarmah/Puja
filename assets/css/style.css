@@ -440,6 +440,29 @@ main {
   margin-left: 1px;
 }
 
+.visit-count {
+  position: fixed;
+  top: max(0.65rem, env(safe-area-inset-top));
+  left: max(0.75rem, env(safe-area-inset-left));
+  z-index: 60;
+  margin: 0;
+  padding: 0.35rem 0.65rem;
+  border-radius: 50px;
+  background: rgba(42, 6, 6, 0.82);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+.visit-count span {
+  color: var(--gold);
+  font-weight: 600;
+}
+
 .gallery-scroll {
   display: flex;
   width: max-content;

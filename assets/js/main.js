@@ -516,6 +516,38 @@ function initMantraAudio() {
   window.addEventListener('pageshow', tryAutoplay);
 }
 
+const VISIT_COUNTER = {
+  key: 'bcpl-viswakarma-puja-2026-total-visits',
+  sessionFlag: 'vp2026_visit_recorded',
+  apiBase: 'https://countapi.mileshilliard.com/api/v1',
+};
+
+async function initVisitCount() {
+  const counter = document.getElementById('visitCount');
+  if (!counter) return;
+
+  const isNewSession = !sessionStorage.getItem(VISIT_COUNTER.sessionFlag);
+  const endpoint = isNewSession ? 'hit' : 'get';
+  const url = `${VISIT_COUNTER.apiBase}/${endpoint}/${VISIT_COUNTER.key}`;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Counter unavailable');
+
+    const data = await response.json();
+    const value = Number(data.value);
+    if (Number.isNaN(value)) throw new Error('Invalid counter value');
+
+    if (isNewSession) {
+      sessionStorage.setItem(VISIT_COUNTER.sessionFlag, '1');
+    }
+
+    counter.textContent = value.toLocaleString('en-IN');
+  } catch {
+    counter.textContent = '—';
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initMantraAudio();
   initHeroVideo();
@@ -524,4 +556,5 @@ document.addEventListener('DOMContentLoaded', () => {
   const galleryCarousel = initGalleryCarousel();
   initImageSlider(galleryCarousel);
   initPushpanjali();
+  initVisitCount();
 });
